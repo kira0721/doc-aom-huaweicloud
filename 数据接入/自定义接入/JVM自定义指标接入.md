@@ -114,6 +114,7 @@ mvn clean package
 docker build . -t swr.cn-east-3.myhuaweicloud.com/[组织名]/[ImageName]:[镜像版本号] .
 docker push swr.cn-east-3.myhuaweicloud.com/组织名]/[ImageName]:[镜像版本号]
 ```
+
 客户端上传镜像可以查看[客户端上传](https://support.huaweicloud.com/usermanual-swr/swr_01_0011.html)
 
 

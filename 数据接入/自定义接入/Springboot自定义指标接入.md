@@ -23,9 +23,9 @@
 
 
 ## Demo
-[prometheus-aom-huaweicloud-python-demo](https://github.com/zhouzhengle/prometheus-aom-huaweicloud/tree/main/prometheus-aom-huaweicloud-python-demo)
+地址：[prometheus-aom-huaweicloud-python-demo](https://github.com/zhouzhengle/prometheus-aom-huaweicloud/tree/main/prometheus-aom-huaweicloud-python-demo)
 
-## 修改应用的依赖及配置
+## 应用构建：修改应用的依赖及配置
 
 ### 步骤1：修改 pom 依赖
 
@@ -44,7 +44,7 @@
 Prometheus 根据监控的不同场景提供了 Counter/Gauge/Historgram/Summary 四种指标类型，每种指标类型说明可参见下文。更多说明请参见Prometheus官网 [METRIC TYPES](https://prometheus.io/docs/concepts/metric_types/)。
 Prometheus 社区提供了多种开发语言的 SDK，每种语言的使用方法基本上类似，主要是开发语言语法上的区别，下面主要以 Go 作为例子如何上报自定义监控指标数据。
 
-### 修改配置
+### 步骤2：修改配置
 
 编辑 resources 目录下的 application.yml 文件，修改 actuator 相关的配置来暴露 Prometheus 协议的指标数据
 
@@ -74,7 +74,7 @@ management:
 > 说明：
 > 例子中配置默认配置，对应的端口和路径以实际项目为准。
 
-## 将应用发布到华为云容器CCE服务上
+## 将 应用 发布到容器服务CCE
 
 上述我们提供了两个示例展示如何使用 Prometheus Python库来暴露应用的指标数据，但暴露的监控指标数据为文本类型，需要将指标对接到AOM的指标库中。
 
@@ -84,7 +84,7 @@ management:
 
 ### 步骤2：打包及上传镜像
 
-01. 在项目根目录下添加 Dockerfile ，您可以参考如下示例进行添加，在实际项目中需要修改 Dockerfile 。
+- 在项目根目录下添加 Dockerfile ，您可以参考如下示例进行添加，在实际项目中需要修改 Dockerfile 。
 
 ```Dockerfile
 FROM openjdk:8-jdk
@@ -93,21 +93,19 @@ ADD target/prometheus-aom-huaweicloud-java-demo-*.jar /prometheus-aom-huaweiclou
 CMD ["java","-jar","prometheus-aom-huaweicloud-java-demo.jar"]
 ```
 
-02. 将镜像推送到[华为云镜像服务](https://console.huaweicloud.com/swr/?region=cn-east-3#/swr/dashboard)
-
 ```bash
-# 给镜像打上标签
-docker tag prometheus-aom-huaweicloud-java-demo:1.0.0 swr.cn-east-3.myhuaweicloud.com/aom-org/prometheus-aom-huaweicloud-java-demo:1.0.0
+# 镜像打包 docker build -t swr.cn-east-3.myhuaweicloud.com/[组织名]/[ImageName]:[镜像版本号] .
+docker build -t swr.cn-east-3.myhuaweicloud.com/aom-org/prometheus-aom-huaweicloud-java-demo:1.0.0 .
 ```
 
-客户端上传镜像可以查看[客户端上传](https://support.huaweicloud.com/usermanual-swr/swr_01_0011.html)
+- 将镜像推送到[华为云镜像服务](https://console.huaweicloud.com/swr/?region=cn-east-3#/swr/dashboard)
 
 ```bash
-# 推送到SWR
+# 镜像推送到docker push swr.cn-east-3.myhuaweicloud.com/组织名]/[ImageName]:[镜像版本号]
 docker push swr.cn-east-3.myhuaweicloud.com/aom-org/prometheus-aom-huaweicloud-java-demo:1.0.0
 ```
 
-03. 部署到CCE集群里
+### 步骤3：部署到CCE集群
 
 - 创建工作负载
 
@@ -121,7 +119,15 @@ docker push swr.cn-east-3.myhuaweicloud.com/aom-org/prometheus-aom-huaweicloud-j
 
 ![](images/image3.png)
 
-04. 添加采集任务
+### 步骤4：添加采集任务，并上报到[华为云可观测产品AOM](https://console.huaweicloud.com/aom2)
+
+1. 在AOM产里创建Prometheus实例，Prometheus实例类型为Prometheus For CCE类型。
+
+![Alt](images/image6.png)
+
+2. 关联Prometheus实例与 CCE集群，集群里自定义指标即可以上报到该prometheus实例
+
+![](images/image7.png )
 
 - 方法1：创建完之后，在工作负载prometheus-aom-huaweicloud-java-demo.yaml增加annotaion：
 
@@ -171,14 +177,7 @@ spec:
       app: prometheus-aom-huaweicloud-java-demo 
 ```
 
-4. 创建Prometheus For CCE实例
 
-![](images/image3.png)
-
-5. 关联Prometheus实例与 CCE集群，集群里自定义指标即可以上报到该prometheus实例
-
-![](images/image4.png)
-
-### 在AOM上配置仪表盘和告警
-![](images/image4.png)
-![](images/image5.png)
+## 在AOM上配置仪表盘和告警
+![](images/image4.png )
+![](images/image5.png )

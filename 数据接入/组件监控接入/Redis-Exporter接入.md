@@ -11,7 +11,7 @@
 - [CCE服务：已有CCE集群](https://console.huaweicloud.com/cce2.0)
 - [华为云镜像服务SWR](https://console.huaweicloud.com/swr)
 - [AOM服务：创建Prometheus For CCE实例，实例已关联集群](https://console.huaweicloud.com/aom2)
-- exporter安装命名空间和对应的中间件命名空间要相同
+- 在集群中exporter安装命名空间和对应的中间件命名空间要相同
 
 ## 操作步骤
 
@@ -104,7 +104,7 @@ spec:
 4. 访问地址：http://123.60.5.226:9121/metrics,如发现未能得到对应的数据，请检查一下 REDIS_ADDR 和 REDIS_PASSWORD 是否正确,验证完之后，可以把service删除，示例如下：
 ![Alt text](images/image3.png)
 
-## 添加采取任务
+### 步骤4：添加采集任务
 
 - 方法1：创建完之后，在工作负载prometheus-aom-huaweicloud-java-demo.yaml增加annotaion：
 
