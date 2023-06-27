@@ -17,82 +17,81 @@
 
 ### 步骤1：Exporter 部署
 
-1. 登录 [容器服务](https://console.huaweicloud.com/cce2.0)。
-2. 在左侧菜单栏中单击*集群*。
-3. 选择某一个集群，进入该集群的管理页面。
-4. 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。
+- 登录 [容器服务](https://console.huaweicloud.com/cce2.0)。
+- 在左侧菜单栏中单击*集群*。
+- 选择某一个集群，进入该集群的管理页面。
+- 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。
 
-```yml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: redis-secret
-  namespace: aom-middleware-demo
-type: Opaque
-data:
-  password: MTIzNDU2  #对应 Redis 密码
-```
+  ```yml
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: redis-secret
+    namespace: aom-middleware-demo
+  type: Opaque
+  data:
+    password: MTIzNDU2  #对应 Redis 密码
+  ```
 
-### 步骤2：部署 Redis Exporter
+- 在CCE中配置拉取redis-exporter镜像，查看[CCE集群如何拉取prometheus-exporter](./CCE集群如何拉取prometheus-exporter.md)
+- 创建redis-exporter的Deployment，YAML 配置示例如下：
 
-在 Deployment 管理页面，单击新建，选择对应的命名空间来进行部署服务。可以通过控制台的方式创建，如下以 YAML 的方式部署 Exporter，YAML 配置示例如下：
+  > 更多 Exporter 详细参数介绍请参见 [redis_exporter](https://github.com/oliver006/redis_exporter)。
 
-> 更多 Exporter 详细参数介绍请参见 [redis_exporter](https://github.com/oliver006/redis_exporter)。
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: redis-secret
-  namespace: aom-middleware-demo
-type: Opaque
-data:
-  password: MTIzNDU2  #对应 Redis 密码
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    k8s-app: redis-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-  name: redis-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-  namespace: aom-middleware-demo
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
+  ```yaml
+  apiVersion: v1
+  kind: Secret
+  metadata:
+    name: redis-secret
+    namespace: aom-middleware-demo
+  type: Opaque
+  data:
+    password: MTIzNDU2  #对应 Redis 密码
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
       k8s-app: redis-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-  template:
-    metadata:
-      labels:
+    name: redis-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
+    namespace: aom-middleware-demo
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
         k8s-app: redis-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-    spec:
-      containers:
-      - env:
-        - name: REDIS_ADDR
-          value: 10.247.176.30:6379 # 对应 Redis 的 ip:port
-        - name: REDIS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: redis-secret
-              key: password
-        image: swr.cn-east-3.myhuaweicloud.com/aom-org/bitnami/redis-exporter:latest
-        imagePullPolicy: IfNotPresent
-        name: redis-exporter
-        ports:
-        - containerPort: 9121
-          name: metric-port  # 这个名称在配置抓取任务的时候需要
-        securityContext:
-          privileged: false
-        terminationMessagePath: /dev/termination-log
-        terminationMessagePolicy: File
-      dnsPolicy: ClusterFirst
-      imagePullSecrets:
-      - name: default-secret
-      restartPolicy: Always
-      schedulerName: default-scheduler
-      securityContext: {}
-      terminationGracePeriodSeconds: 30
-```
+    template:
+      metadata:
+        labels:
+          k8s-app: redis-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
+      spec:
+        containers:
+        - env:
+          - name: REDIS_ADDR
+            value: 10.247.176.30:6379 # 对应 Redis 的 ip:port
+          - name: REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: redis-secret
+                key: password
+          image: swr.cn-east-3.myhuaweicloud.com/aom-org/bitnami/redis-exporter:latest
+          imagePullPolicy: IfNotPresent
+          name: redis-exporter
+          ports:
+          - containerPort: 9121
+            name: metric-port  # 这个名称在配置抓取任务的时候需要
+          securityContext:
+            privileged: false
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+        dnsPolicy: ClusterFirst
+        imagePullSecrets:
+        - name: default-secret
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+  ```
 
 ### 步骤3：验证
 
