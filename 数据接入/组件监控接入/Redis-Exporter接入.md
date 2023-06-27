@@ -106,30 +106,7 @@ spec:
 
 ### 步骤4：添加采集任务
 
-- 方法1：创建完之后，在工作负载prometheus-aom-huaweicloud-java-demo.yaml增加annotaion：
-
-```yml
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: prometheus-aom-huaweicloud-java-demo
-      version: v1
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: prometheus-aom-huaweicloud-java-demo
-        version: v1
-      # 关键配置， CCE的kube-prometheus-stack插件将从暴露的自定义指标地址采集，并上报到AOM
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "5002"
-        prometheus.io/path: "/actuator/prometheus"
-        prometheus.io/scheme: "http"
-```
-
-- 方法2：通过ServiceMonitor配置
+- 方法1【$\color{red} {推荐}$】：通过ServiceMonitor配置
   - 登录 [AOM](https://console.huaweicloud.com/aom2)
   - 在左侧菜单栏中单击Prometheus监控，选择对应的Prometheus实例（For CCE实例类型）进入管理面。
   - 点击服务发现
@@ -167,6 +144,31 @@ spec:
       k8s-app: redis-exporter
 ```
 
+- 方法2：创建完之后，在工作负载prometheus-aom-huaweicloud-java-demo.yaml增加annotaion：
+
+```yml
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-aom-huaweicloud-java-demo
+      version: v1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: prometheus-aom-huaweicloud-java-demo
+        version: v1
+      # 关键配置， CCE的kube-prometheus-stack插件将从暴露的自定义指标地址采集，并上报到AOM
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5002"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/scheme: "http"
+```
+
+
 ## 在AOM上配置仪表盘和告警
+
 ![Alt text](images/image4.png)
 ![Alt text](images/image5.png)
