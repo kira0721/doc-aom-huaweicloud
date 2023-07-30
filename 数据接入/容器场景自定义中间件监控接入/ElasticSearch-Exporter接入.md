@@ -32,7 +32,7 @@
       namespace: aom-middleware-demo
     type: Opaque
     data:
-      esURI: http://10.247.43.50:9200  #you-guess  #对应 ElasticSearch 的 URI
+      esURI: http://10.247.43.50:9200  # 对应中间件监控地址,这里要转成密文才能通过yml文件创建
     ```
     也可以使用界面化操作：
     ![Alt text](images/image6.png)
@@ -91,11 +91,10 @@
     1. Deployment列表>Deployment详情>Pod实例>更多>日志，查看，可以查看到Exporter成功启动并暴露对应的访问地址，如下图所示：
     ![Alt text](images/image7.png)
     2. 单击 Pod 管理页签，进入 Pod 页面。
-    3. 也可以通过创建一个外网的service，验证暴露的地址是否可以正常得到对应的elasticsearch指标。
-    ![Alt text](images/image9.png)
-    4. 访问地址：http://123.60.5.226:9114/metrics,如发现未能得到对应的数据，验证完之后，可以把service删除，示例如下：
-    ![Alt text](images/image8.png)
-
+    3. 也可以通过创建一个外网的service，验证暴露的地址是否可以正常得到对应的指标,以memcached为例。
+    ![Alt text](images/image15.png)
+    4. 访问地址：http://123.60.5.226:9114/metrics,如发现未能得到对应的数据，验证完之后，可以把service删除，以memcached为例：
+    ![Alt text](images/image14.png)
 ### 步骤2：添加采集任务
 
 - 登录 [AOM](https://console.huaweicloud.com/aom2)
@@ -107,7 +106,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
-  name: elasticsearch-exporter
+  name: consul-exporter
   namespace: aom-middleware-demo
 spec:
   namespaceSelector:
@@ -119,9 +118,9 @@ spec:
     port: metric-port
   selector:
     matchLabels:
-      k8s-app: elasticsearch-exporter
+      k8s-app: consul-exporter
 ```
 
-## 在AOM上配置仪表盘和告警
+## 在AOM上配置仪表盘和告警（以Memcached为例）
 ![Alt text](images/image10.png)
 ![Alt text](images/image11.png)

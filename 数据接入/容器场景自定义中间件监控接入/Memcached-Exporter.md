@@ -1,6 +1,6 @@
 # Memcached Exporter 接入
 
-## 操作场景 
+## 操作场景
 
 在使用 Memcached 过程中需要对 Memcached 运行状态进行监控，以便了解 Memcached 服务是否运行正常，排查 Memcached 故障等。 Prometheus 监控服务提供基于 Exporter 的方式来监控 Memcached 运行状态，并提供了开箱即用的 Grafana 监控大盘。本文为您介绍如何使用 Prometheus 监控服务 Memcached。
 
@@ -15,7 +15,7 @@
 
 ## 操作步骤
 
-### 步骤1：ElasticSearch Exporter 部署
+### Memcached Exporter 部署
 
 1. 登录 [容器服务](https://console.huaweicloud.com/cce2.0)。
 2. 在左侧菜单栏中单击*集群*。
@@ -34,7 +34,7 @@
       namespace: aom-middleware-demo
     type: Opaque
     data:
-      memcachedURI: 10.247.167.43:11211  #you-guess  #对应 Memcached 的 service URI，yml是密文
+      memcachedURI: 10.247.167.43:11211  # 对应中间件监控地址,这里要转成密文才能通过yml文件创建
     ```
     4.2 部署 Memcached Exporter
     在 Deployment 管理页面，单击新建，选择对应的命名空间来进行部署服务。可以通过控制台的方式创建，如下以 YAML 的方式部署 Exporter，YAML 配置示例如下：
