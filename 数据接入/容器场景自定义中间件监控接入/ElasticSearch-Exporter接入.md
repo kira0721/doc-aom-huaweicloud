@@ -44,46 +44,47 @@
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-    labels:
-        k8s-app: elasticsearch-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-    name: elasticsearch-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-    namespace: aom-middleware-demo
+      labels:
+        k8s-app: elasticsearch-exporter 
+      name: elasticsearch-exporter 
+      namespace: aom-middleware-demo
     spec:
-    replicas: 1
-    selector:
+      replicas: 1
+      selector:
         matchLabels:
-        k8s-app: elasticsearch-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-    template:
+          k8s-app: elasticsearch-exporter 
+      template:
         metadata:
-        labels:
-            k8s-app: elasticsearch-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
+          labels:
+            k8s-app: elasticsearch-exporter 
         spec:
-        containers:
+          containers:
             - name: elasticsearch-exporter
-            env:
+              env:
                 - name: ES_ALL
-                value: "true"
+                  value: "true"
                 - name: ES_URI
-                valueFrom:
+                  valueFrom:
                     secretKeyRef:
-                    name: es-exporter-secret
-                    key: esURI
-            image: swr.cn-east-3.myhuaweicloud.com/aom-org/bitnami/elasticsearch-exporter:1.5.0
-            imagePullPolicy: IfNotPresent
-            ports:
+                      name: es-exporter-secret
+                      key: esURI
+              command: ["elasticsearch_exporter", "--es.uri=$(ES_URI)","--es.all"]
+              image: swr.cn-east-3.myhuaweicloud.com/aom-org/bitnami/elasticsearch-exporter:1.5.0
+              imagePullPolicy: IfNotPresent
+              ports:
                 - containerPort: 9114
-                name: metric-port  # 这个名称在配置抓取任务的时候需要
-            terminationMessagePath: /dev/termination-log
-            terminationMessagePolicy: File
-            securityContext:
+                  name: metric-port  # 这个名称在配置抓取任务的时候需要
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              securityContext:
                 privileged: false
-        dnsPolicy: ClusterFirst
-        imagePullSecrets:
+          dnsPolicy: ClusterFirst
+          imagePullSecrets:
             - name: default-secret
-        restartPolicy: Always
-        schedulerName: default-scheduler
-        securityContext: {}
-        terminationGracePeriodSeconds: 30
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
     ```
     > 上述示例通过 ES_ALL 采集了所有 ElasticSearch 的监控项，可以通过对应的参数进行调整，Exporter 更多详细的参数请参见 [elasticsearch_exporter](https://github.com/prometheus-community/elasticsearch_exporter)。
     4.3 验证
