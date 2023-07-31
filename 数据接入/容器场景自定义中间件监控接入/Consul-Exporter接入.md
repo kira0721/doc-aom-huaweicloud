@@ -15,7 +15,7 @@
 
 ## 操作步骤
 
-### 步骤1：ElasticSearch Exporter 部署
+### 步骤1：Consul Exporter 部署
 
 1. 登录 [容器服务](https://console.huaweicloud.com/cce2.0)。
 2. 在左侧菜单栏中单击*集群*。
