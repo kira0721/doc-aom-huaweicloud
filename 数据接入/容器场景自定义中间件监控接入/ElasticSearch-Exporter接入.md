@@ -21,9 +21,9 @@
 2. 在左侧菜单栏中单击*集群*。
 3. 选择某一个集群，进入该集群的管理页面。
 4. 执行以下3个步骤完成 Exporter 部署。
-   4.1 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。
-   使用 Secret 管理 ElasticSearch 连接串，详见以下说明
+   4.1 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。使用 Secret 管理 ElasticSearch 连接串，ElasticSearch链接串格式为http://10.247.43.50:9200。建议使用界面化操作（以memcached配置为例）如果使用yml创建，则需要密文。
    >  ElasticSearch 连接串的格式为 \<proto\>://\<user\>:\<password\>@\<host\>:\<port\>，例如 http://admin:pass@localhost:9200。也可以不设置密码：http://10.247.43.50:9200
+    ![Alt text](images/image12.png)
     ```yml
     apiVersion: v1
     kind: Secret
@@ -34,8 +34,6 @@
     data:
       esURI: http://10.247.43.50:9200  # 对应中间件监控地址,这里要转成密文才能通过yml文件创建
     ```
-    也可以使用界面化操作：
-    ![Alt text](images/image6.png)
     4.2 部署 ElasticSearch Exporter
     在 Deployment 管理页面，单击新建，选择对应的命名空间来进行部署服务。可以通过控制台的方式创建，如下以 YAML 的方式部署 Exporter，YAML 配置示例如下：
     > 更多 Exporter 详细参数介绍请参见 [elasticsearch_exporter](https://github.com/prometheus-community/elasticsearch_exporter)。

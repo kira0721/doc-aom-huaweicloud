@@ -55,7 +55,7 @@ nginx -s reload
 ```
 4. 完成上述步骤之后，可以通过配置的 URL 查看 Nginx 的指标：
 ```bash
-curl http://192.168.10.10:8080/stub_status
+curl http://192.168.10.10:8080/nginx_status
 
 Active connections: 45
 server accepts handled requests
@@ -77,8 +77,7 @@ $ ./nginx-prometheus-exporter -nginx.scrape-uri=http://192.168.10.10:8080/nginx_
 6. 在左侧菜单栏中单击*集群*。
 7. 选择某一个集群，进入该集群的管理页面。
 8. 执行以下3个步骤完成 Exporter 部署。
-   4.1 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。
-   使用 Secret 管理 Memcached 连接串，详见以下说明
+   4.1 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。使用 Secret 管理 Nginx 连接串，nginx连接串为：http://10.247.199.75:8080/nginx_status。建议使用界面化操作（以memcached配置为例）如果使用yml创建，则需要密文。
    >  Memcached 连接串的格式为 http://10.247.43.50:11211
     【建议】也可以使用界面化操作：
     ![Alt text](images/image12.png)
@@ -86,13 +85,13 @@ $ ./nginx-prometheus-exporter -nginx.scrape-uri=http://192.168.10.10:8080/nginx_
     apiVersion: v1
     kind: Secret
     metadata:
-      name: memcached-exporter-secret
+      name: nginx-prometheus-exporter-secret
       namespace: aom-middleware-demo
     type: Opaque
     data:
-      memcachedURI: 10.247.167.43:11211  # 对应中间件监控地址,这里要转成密文才能通过yml文件创建
+      nginxURI: http://10.247.199.75:8080/nginx_status  # 对应中间件监控地址,这里要转成密文才能通过yml文件创建
     ```
-    4.2 部署 Memcached Exporter
+    4.2 部署 nginx-prometheus-exporter
     在 Deployment 管理页面，单击新建，选择对应的命名空间来进行部署服务。可以通过控制台的方式创建，如下以 YAML 的方式部署 Exporter，YAML 配置示例如下：
     > 更多 Exporter 详细参数介绍请参见 [memcached_exporter](https://github.com/prometheus/memcached_exporter)。
 
@@ -100,47 +99,47 @@ $ ./nginx-prometheus-exporter -nginx.scrape-uri=http://192.168.10.10:8080/nginx_
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-    labels:
-        k8s-app: memcached-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-    name: memcached-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-    namespace: aom-middleware-demo
+      labels:
+        k8s-app: nginx-prometheus-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
+      name: nginx-prometheus-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
+      namespace: aom-middleware-demo
     spec:
-    replicas: 1
-    selector:
+      replicas: 1
+      selector:
         matchLabels:
-        k8s-app: memcached-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
-    template:
+          k8s-app: nginx-prometheus-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
+      template:
         metadata:
-        labels:
-            k8s-app: memcached-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
+          labels:
+            k8s-app: nginx-prometheus-exporter # 根据业务需要调整成对应的名称，建议加上 Redis 实例的信息
         spec:
-        containers:
-            - name: memcached-exporter
-            env:
-                - name: Memcached_Url
-                valueFrom:
+          containers:
+            - name: nginx-prometheus-exporter
+              env:
+                - name: Nginx_Url
+                  valueFrom:
                     secretKeyRef:
-                    name: memcached-exporter-secret
-                    key: memcachedURI
-            command: ["memcached_exporter", "--memcached.address=$(Memcached_Url)"]
-            image: swr.cn-east-3.myhuaweicloud.com/aom-org/bitnami/memcached-exporter:0.13.0
-            imagePullPolicy: IfNotPresent
-            ports:
-                - containerPort: 9150
-                name: metric-port  # 这个名称在配置抓取任务的时候需要
-            terminationMessagePath: /dev/termination-log
-            terminationMessagePolicy: File
-            securityContext:
+                      name: nginx-prometheus-exporter-secret
+                      key: nginxURI
+              command: ["nginx-prometheus-exporter", "-nginx.scrape-uri=$(Nginx_Url)"]
+              image: swr.cn-east-3.myhuaweicloud.com/aom-org/nginx/nginx-prometheus-exporter:latest
+              imagePullPolicy: IfNotPresent
+              ports:
+                - containerPort: 9113
+                  name: metric-port  # 这个名称在配置抓取任务的时候需要
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              securityContext:
                 privileged: false
-        dnsPolicy: ClusterFirst
-        imagePullSecrets:
+          dnsPolicy: ClusterFirst
+          imagePullSecrets:
             - name: default-secret
-        restartPolicy: Always
-        schedulerName: default-scheduler
-        securityContext: {}
-        terminationGracePeriodSeconds: 30
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
     ```
-    4.3 验证
+    4.3 验证（以Memcached为例）
     1. Deployment列表>Deployment详情>Pod实例>更多>日志，查看，可以查看到Exporter成功启动并暴露对应的访问地址，如下图所示：
     ![Alt text](images/image13.png)
     2. 单击 Pod 管理页签，进入 Pod 页面。
@@ -157,10 +156,11 @@ $ ./nginx-prometheus-exporter -nginx.scrape-uri=http://192.168.10.10:8080/nginx_
 - 通过服务发现添加PodMonitor
 
 ```yml
+# 通过PodMonitor采集数据到AOM
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
-  name: memcached-exporter
+  name: nginx-prometheus-exporter
   namespace: aom-middleware-demo
 spec:
   namespaceSelector:
@@ -172,7 +172,7 @@ spec:
     port: metric-port
   selector:
     matchLabels:
-      k8s-app: memcached-exporter
+      k8s-app: nginx-prometheus-exporter
 ```
 
 ## 在AOM上配置仪表盘和告警
