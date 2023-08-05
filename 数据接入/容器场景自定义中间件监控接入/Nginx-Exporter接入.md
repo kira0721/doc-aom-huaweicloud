@@ -7,7 +7,6 @@ Nginx 通过 stub_status 页面暴露了部分监控指标。Nginx Prometheus Ex
 > 为了方便安装管理 Exporter，推荐使用华为云 容器服务CCE 进行统一管理。
 
 ## 前提条件
-
 - [CCE服务：已有CCE集群](https://console.huaweicloud.com/cce2.0)
 - [华为云镜像服务SWR](https://console.huaweicloud.com/swr)
 - [AOM服务：创建Prometheus For CCE实例，实例已关联集群](https://console.huaweicloud.com/aom2)
@@ -31,14 +30,14 @@ Nginx 通过 stub_status 页面暴露了部分监控指标。Nginx Prometheus Ex
 ```bash
 nginx -V 2>&1 | grep -o with-http_stub_status_module
 ```
-   + 如果在终端中输出 with-http_stub_status_module ，则说明 Nginx 已启用 tub_status 模块。
-   + 如果未输出任何结果，则可以使用 --with-http_stub_status_module 参数从源码重新配置编译一个 Nginx。示例如下：
+   + 如果在终端中输出 with-http_stub_status_module ，则说明 Nginx 已启用 stub_status 模块。
+   + 如果未输出任何结果，则可以使用 --with-http_stub_status_module 参数从源码重新配置编译一个 Nginx 镜像。示例如下：
     ```bash
     ./configure \
     … \
     --with-http_stub_status_module
     make
-    sudo make install
+    make install
     ```
 2. 确认 stub_status 模块启用之后，修改 Nginx 的配置文件指定 status 页面的 URL。示例如下：
 ```bash
@@ -62,39 +61,24 @@ server accepts handled requests
 1056958 1156958 4491319
 Reading: 0 Writing: 25 Waiting : 7
 ```
-#### 运行 NGINX Prometheus Exporter
-执行以下命令启动 NGINX Prometheus Exporter：
-```bash
-$ ./nginx-prometheus-exporter -nginx.scrape-uri=http://192.168.10.10:8080/nginx_status
-```
-
-#### 上报指标
-+ nginxexporter_build_info -- exporter 编译信息。
-+ 所有的 stub_status 指标。
-+ nginx_up -- 展示上次抓取的状态：1表示抓取成功， 0表示抓取失败。
-
-5. 登录 [容器服务](https://console.huaweicloud.com/cce2.0)。
-6. 在左侧菜单栏中单击*集群*。
-7. 选择某一个集群，进入该集群的管理页面。
-8. 执行以下3个步骤完成 Exporter 部署。
-   4.1 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。使用 Secret 管理 Nginx 连接串，nginx连接串为：http://10.247.199.75:8080/nginx_status。建议使用界面化操作（以memcached配置为例）如果使用yml创建，则需要密文。
-   >  Memcached 连接串的格式为 http://10.247.43.50:11211
+5. 执行以下3个步骤完成 Exporter 部署。
+   5.1 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。使用 Secret 管理 Nginx 连接串，Nginx链接串格式为http://10.247.43.50:9200。建议使用界面化操作（以memcached配置为例）如果使用yml创建，则需要密文。
+   >  Nginx 连接串的格式为 http://10.247.199.75:8080/nginx_status
     【建议】也可以使用界面化操作：
     ![Alt text](images/image12.png)
     ```yml
     apiVersion: v1
     kind: Secret
     metadata:
-      name: nginx-prometheus-exporter-secret
+      name: nginx-prometheus-secret
       namespace: aom-middleware-demo
     type: Opaque
     data:
-      nginxURI: http://10.247.199.75:8080/nginx_status  # 对应中间件监控地址,这里要转成密文才能通过yml文件创建
+      nginxURI: http://10.247.199.75:8080/nginx_status  #you-guess  #对应 consul 的 URI
     ```
-    4.2 部署 nginx-prometheus-exporter
+    5.2 部署 nignx-prometheus-exporter
     在 Deployment 管理页面，单击新建，选择对应的命名空间来进行部署服务。可以通过控制台的方式创建，如下以 YAML 的方式部署 Exporter，YAML 配置示例如下：
-    > 更多 Exporter 详细参数介绍请参见 [memcached_exporter](https://github.com/prometheus/memcached_exporter)。
-
+    > 更多 Exporter 详细参数介绍请参见 [nginx-prometheus-exporter]()。
     ```yaml
     apiVersion: apps/v1
     kind: Deployment
@@ -139,13 +123,13 @@ $ ./nginx-prometheus-exporter -nginx.scrape-uri=http://192.168.10.10:8080/nginx_
           securityContext: {}
           terminationGracePeriodSeconds: 30
     ```
-    4.3 验证（以Memcached为例）
+    5.3 验证
     1. Deployment列表>Deployment详情>Pod实例>更多>日志，查看，可以查看到Exporter成功启动并暴露对应的访问地址，如下图所示：
-    ![Alt text](images/image13.png)
+    ![Alt text](images/image7.png)
     2. 单击 Pod 管理页签，进入 Pod 页面。
-    3. 也可以通过创建一个外网的service，验证暴露的地址是否可以正常得到对应的memcached指标。
+    3. 也可以通过创建一个外网的service，验证暴露的地址是否可以正常得到对应的指标,以memcached为例。
     ![Alt text](images/image15.png)
-    4. 访问地址：http://123.60.5.226:9114/metrics,如发现未能得到对应的数据，验证完之后，可以把service删除，示例如下：
+    4. 访问地址：http://123.60.5.226:9114/metrics,如发现未能得到对应的数据，验证完之后，可以把service删除，以memcached为例：
     ![Alt text](images/image14.png)
 
 ### 步骤2：添加采集任务

@@ -21,11 +21,11 @@
 2. 在左侧菜单栏中单击*集群*。
 3. 选择某一个集群，进入该集群的管理页面。
 4. 执行以下3个步骤完成 Exporter 部署。
-   4.1 配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。
-   使用 Secret 管理 Consul 连接串，详见以下说明
+   4.1 使用 Secret 管理 consul 连接串
+   配置项与密钥 > YAML创建,输入以下yml文件，密码是按照Opaque加密过的。使用 Secret 管理 Consul 连接串，Consul链接串格式为10.247.3.138:8500。建议使用界面化操作（以memcached配置为例）如果使用yml创建，则需要密文。
    >  Consul 连接串的格式为 172.17.0.1:8500
     【建议】也可以使用界面化操作：
-    ![Alt text](images/image18.png)
+    ![Alt text](images/image12.png)
     ```yml
     apiVersion: v1
     kind: Secret
