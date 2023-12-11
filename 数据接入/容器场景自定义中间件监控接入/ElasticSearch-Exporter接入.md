@@ -29,60 +29,73 @@
     kind: Secret
     metadata:
       name: es-exporter-secret
-      namespace: aom-middleware-demo
+      namespace: default
     type: Opaque
     data:
-      esURI: http://10.247.43.50:9200  # 对应中间件监控地址,这里要转成密文才能通过yml文件创建
+      esURI: http://124.70.14.51:30920  # 对应中间件监控地址,这里要转成密文才能通过yml文件创建,配置规则：http://ElasticSearch所在节点公网IP:30920
     ```
     4.2 部署 ElasticSearch Exporter
     在 Deployment 管理页面，单击新建，选择对应的命名空间来进行部署服务。可以通过控制台的方式创建，如下以 YAML 的方式部署 Exporter，YAML 配置示例如下：
     > 更多 Exporter 详细参数介绍请参见 [elasticsearch_exporter](https://github.com/prometheus-community/elasticsearch_exporter)。
 
     ```yaml
-    apiVersion: apps/v1
-    kind: Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: es-exporter # 根据业务需要调整成对应的名称
+  name: es-exporter # 根据业务需要调整成对应的名称
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: es-exporter # 根据业务需要调整成对应的名称
+  template:
     metadata:
       labels:
-        k8s-app: elasticsearch-exporter 
-      name: elasticsearch-exporter 
-      namespace: aom-middleware-demo
+        k8s-app: es-exporter # 根据业务需要调整成对应的名称
     spec:
-      replicas: 1
-      selector:
-        matchLabels:
-          k8s-app: elasticsearch-exporter 
-      template:
-        metadata:
-          labels:
-            k8s-app: elasticsearch-exporter 
-        spec:
-          containers:
-            - name: elasticsearch-exporter
-              env:
-                - name: ES_ALL
-                  value: "true"
-                - name: ES_URI
-                  valueFrom:
-                    secretKeyRef:
-                      name: es-exporter-secret
-                      key: esURI
-              command: ["elasticsearch_exporter", "--es.uri=$(ES_URI)","--es.all"]
-              image: swr.cn-east-3.myhuaweicloud.com/aom-org/bitnami/elasticsearch-exporter:1.5.0
-              imagePullPolicy: IfNotPresent
-              ports:
-                - containerPort: 9114
-                  name: metric-port  # 这个名称在配置抓取任务的时候需要
-              terminationMessagePath: /dev/termination-log
-              terminationMessagePolicy: File
-              securityContext:
-                privileged: false
-          dnsPolicy: ClusterFirst
-          imagePullSecrets:
-            - name: default-secret
-          restartPolicy: Always
-          schedulerName: default-scheduler
-          securityContext: {}
-          terminationGracePeriodSeconds: 30
+      containers:
+      - env:
+          - name: ES_URI
+            valueFrom:
+              secretKeyRef:
+                name: es-secret-test # 对应上一步中的 Secret 的名称
+                key: esURI # 对应上一步中的 Secret Key
+          - name: ES_ALL
+            value: "true"
+        image: swr.cn-north-4.myhuaweicloud.com/mall-swarm-demo/es-exporter:1.1.0
+        imagePullPolicy: IfNotPresent
+        name: es-exporter
+        ports:
+        - containerPort: 9114
+          name: metric-port
+        securityContext:
+          privileged: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: default-secret
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: es-exporter
+spec:
+  type: NodePort
+  selector:
+    k8s-app: es-exporter
+  ports:
+    - protocol: TCP
+      nodePort：30921
+      port: 9114
+      targetPort: 9114	  
     ```
     > 上述示例通过 ES_ALL 采集了所有 ElasticSearch 的监控项，可以通过对应的参数进行调整，Exporter 更多详细的参数请参见 [elasticsearch_exporter](https://github.com/prometheus-community/elasticsearch_exporter)。
     4.3 验证
@@ -105,11 +118,11 @@ apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
   name: consul-exporter
-  namespace: aom-middleware-demo
+  namespace: default
 spec:
   namespaceSelector:
     matchNames:
-      - aom-middleware-demo
+      - default
   podMetricsEndpoints:
   - interval: 30s
     path: /metrics
@@ -118,7 +131,12 @@ spec:
     matchLabels:
       k8s-app: consul-exporter
 ```
+## 验证
+- 登录 [AOM](https://console.huaweicloud.com/aom2)
+- 在左侧菜单栏中单击Prometheus监控，选择对应的Prometheus实例（For CCE实例类型）进入管理面。
+- 点击服务发现,搜索是否存在elasticsearch开头的指标
+  ![image](https://github.com/zhouzhengle/doc-aom-huaweicloud/assets/37617103/2da989c3-fd17-40ec-a682-75fc281cd674)
+
 
 ## 在AOM上配置仪表盘和告警（以Memcached为例）
-![Alt text](images/image10.png)
-![Alt text](images/image11.png)
+
